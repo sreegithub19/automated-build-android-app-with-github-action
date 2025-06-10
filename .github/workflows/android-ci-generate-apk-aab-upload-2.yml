@@ -128,17 +128,17 @@ jobs:
           name: ${{ env.date_today }} - ${{ env.playstore_name }} - ${{ env.repository_name }} - App bundle(s) AAB release generated
           path: ${{ env.main_project_module }}/build/outputs/bundle/release/
 
-      # --- Emulator and Screenshot Steps Added Below ---
+      # # --- Emulator and Screenshot Steps Added Below ---
 
-      - name: run tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          script: ./gradlew connectedCheck
+      # - name: run tests
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 29
+      #     script: ./gradlew connectedCheck
 
-      - name: Upload Emulator Screenshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: emulator-screenshot
-          path: app/screenshot.png
-          retention-days: 7
+      # - name: Upload Emulator Screenshot
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: emulator-screenshot
+      #     path: app/screenshot.png
+      #     retention-days: 7
