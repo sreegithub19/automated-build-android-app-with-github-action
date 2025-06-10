@@ -115,3 +115,28 @@ jobs:
         with:
           name: ${{ env.date_today }} - ${{ env.playstore_name }} - ${{ env.repository_name }} - App bundle(s) AAB release generated
           path: ${{ env.main_project_module }}/build/outputs/bundle/release/
+
+      # --- Emulator and Screenshot Steps Added Below ---
+
+      - name: Start Android Emulator and Take Screenshot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -accel off
+          script: |
+            cd ${{ env.main_project_module }}
+            adb install -r build/outputs/apk/debug/app-debug.apk
+            adb shell am start -n com.example.singlefilexml/.MainActivity
+            sleep 15 # wait for the UI to load
+            adb shell screencap -p /sdcard/screenshot.png
+            adb pull /sdcard/screenshot.png screenshot.png
+
+      - name: Upload Emulator Screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-screenshot
+          path: app/screenshot.png
+          retention-days: 7
