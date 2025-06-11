@@ -182,7 +182,8 @@ jobs:
             adb devices
             adb shell am start -n com.example.helloworld/.MainActivity
 
-            adb shell 'while [[ -z $(dumpsys activity | grep mResumedActivity | grep com.example.helloworld/.MainActivity) ]]; do sleep 1; done'
+            adb shell dumpsys activity | grep mResumedActivity
+            #adb shell 'while [[ -z $(dumpsys activity | grep mResumedActivity | grep com.example.helloworld/.MainActivity) ]]; do sleep 1; done'
             echo "MainActivity is now focused. Waiting a few seconds to ensure rendering..."
             sleep 5
 
