@@ -169,9 +169,6 @@ jobs:
          ls 
          ./gradlew assembleDebug
 
-      - name: Start ADB Server
-        run: adb start-server
-
       - name: Start Android Emulator, Install APK, and Take Screenshot
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -180,6 +177,7 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           script: |
+            adb start-server
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb devices
             adb shell am start -n com.example.helloworld/.MainActivity
