@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Checkout repository # <--- ADD THIS STEP!
+        uses: actions/checkout@v2
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -177,7 +181,7 @@ jobs:
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -n com.example.helloworld/.MainActivity
-            sleep 8
+            sleep 30
             adb exec-out screencap -p > screenshot.png
       - name: Upload Emulator Screenshot
         uses: actions/upload-artifact@v4
