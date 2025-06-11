@@ -232,7 +232,7 @@ jobs:
 
                     // ----------- Screenshot Test ----------- //
                 @Test
-                public void saveDeviceScreenBitmap() throws IOException {
+                public void saveDeviceScreenBitmap() {
                     UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
                     File dir = new File(
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
