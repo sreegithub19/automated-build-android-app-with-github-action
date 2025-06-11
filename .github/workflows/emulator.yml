@@ -177,9 +177,10 @@ jobs:
           profile: Nexus 6
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb devices
             adb shell am start -n com.example.helloworld/.MainActivity
             sleep 30
-            adb shell screencap -p /sdcard/screenshot.png
+            adb emu screenrecord screenshot /sdcard/screenshot.png
             adb pull /sdcard/screenshot.png
 
       - name: Upload Emulator Screenshot
