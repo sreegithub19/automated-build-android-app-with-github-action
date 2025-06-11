@@ -290,6 +290,7 @@ jobs:
             adb devices
             sleep 5
             adb pull /sdcard/Pictures/test_screenshots ./device_screenshots || true
+            adb pull /storage/emulated/0/Pictures/test_screenshots ./device_screenshots || true
             ./gradlew connectedCheck &
             TEST_PID=$!
             # Take screenshots at intervals
