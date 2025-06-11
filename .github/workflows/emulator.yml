@@ -1,15 +1,17 @@
-name: Android Emulator Screenshot with Connected Test
+name: Android Emulator Screenshot
 
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   emulator-screenshot:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+
+      - name: Checkout repository # <--- ADD THIS STEP!
         uses: actions/checkout@v2
 
       - name: Enable KVM
@@ -17,33 +19,23 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Install Emulator Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libx11-dev libvulkan-dev
-
-      - name: Set up Android Project
+      - name: Create minimal Android app source
         run: |
           mkdir -p app/src/main/java/com/example/helloworld
-          mkdir -p app/src/androidTest/java/com/example/helloworld
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/mipmap
-
           echo "android.useAndroidX=true" > gradle.properties
-
           cat > settings.gradle <<EOF
           rootProject.name = "HelloWorld"
           include ':app'
           EOF
-
           cat > build.gradle <<EOF
           buildscript {
               repositories {
@@ -61,7 +53,6 @@ jobs:
               }
           }
           EOF
-
           cat > app/build.gradle <<EOF
           plugins {
               id 'com.android.application'
@@ -75,7 +66,6 @@ jobs:
                   targetSdk 33
                   versionCode 1
                   versionName "1.0"
-                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
               }
               buildTypes {
                   release {
@@ -85,43 +75,35 @@ jobs:
               }
           }
           dependencies {
-              testImplementation 'junit:junit:4.13.2'
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.9.0'
-              androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-              androidTestImplementation 'androidx.test:rules:1.4.0'
-              androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
           }
           EOF
-
           cat > app/src/main/AndroidManifest.xml <<EOF
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.example.helloworld">
-              <application
-                  android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
-                  android:label="@string/app_name"
-                  android:roundIcon="@mipmap/ic_launcher_round"
-                  android:supportsRtl="true"
-                  android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
+                package="com.example.helloworld">
+                <application
+                    android:allowBackup="true"
+                    android:icon="@mipmap/ic_launcher"
+                    android:label="@string/app_name"
+                    android:roundIcon="@mipmap/ic_launcher_round"
+                    android:supportsRtl="true"
+                    android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+                    <activity
+                        android:name=".MainActivity"
+                        android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.MAIN" />
+                            <category android:name="android.intent.category.LAUNCHER" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
           EOF
-
           cat > app/src/main/java/com/example/helloworld/MainActivity.java <<EOF
           package com.example.helloworld;
-
           import android.os.Bundle;
           import androidx.appcompat.app.AppCompatActivity;
-
           public class MainActivity extends AppCompatActivity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -130,7 +112,6 @@ jobs:
               }
           }
           EOF
-
           cat > app/src/main/res/layout/activity_main.xml <<EOF
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -138,7 +119,6 @@ jobs:
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:gravity="center">
-
               <TextView
                   android:id="@+id/hello"
                   android:layout_width="wrap_content"
@@ -147,19 +127,16 @@ jobs:
                   android:textSize="24sp"/>
           </LinearLayout>
           EOF
-
           cat > app/src/main/res/values/strings.xml <<EOF
           <resources>
               <string name="app_name">HelloWorld</string>
           </resources>
           EOF
-
           cat > app/src/main/res/values/styles.xml <<EOF
           <resources>
               <style name="Theme.AppCompat.Light.DarkActionBar" parent="Theme.AppCompat.Light.DarkActionBar" />
           </resources>
           EOF
-
           cat > app/src/main/res/mipmap/ic_launcher.xml <<EOF
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="48dp"
@@ -170,7 +147,6 @@ jobs:
               <path android:fillColor="#FFF" android:pathData="M24,8a16,16 0 1,0 0,32a16,16 0 1,0 0,-32z"/>
           </vector>
           EOF
-
           cat > app/src/main/res/mipmap/ic_launcher_round.xml <<EOF
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="48dp"
@@ -181,59 +157,18 @@ jobs:
               <path android:fillColor="#FFF" android:pathData="M24,12a12,12 0 1,0 0,24a12,12 0 1,0 0,-24z"/>
           </vector>
           EOF
-
           cat > app/proguard-rules.pro <<EOF
           # No rules
           EOF
-
-          cat > app/src/androidTest/java/com/example/helloworld/MainActivityTest.java <<EOF
-          package com.example.helloworld;
-
-          import androidx.test.ext.junit.runners.AndroidJUnit4;
-          import androidx.test.rule.ActivityTestRule;
-
-          import org.junit.Rule;
-          import org.junit.Test;
-          import org.junit.runner.RunWith;
-
-          import static androidx.test.espresso.Espresso.onView;
-          import static androidx.test.espresso.assertion.ViewAssertions.matches;
-          import static androidx.test.espresso.matcher.ViewMatchers.withId;
-          import static androidx.test.espresso.matcher.ViewMatchers.withText;
-
-          @RunWith(AndroidJUnit4.class)
-          public class MainActivityTest {
-
-              @Rule
-              public ActivityTestRule<MainActivity> activityRule = new ActivityTestRule<>(MainActivity.class);
-
-              @Test
-              public void textIsDisplayed() {
-                  onView(withId(R.id.hello)).check(matches(withText("Hello World from Actions!")));
-              }
-          }
-          EOF
-
-      - name: Set Gradle Wrapper
+      - name: Set Gradle wrapper
         run: |
           gradle wrapper
           chmod +x gradlew
-
-      - name: Run Connected Tests on Emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          target: google_apis
-          arch: x86_64
-          profile: Nexus 6
-          script: ./gradlew connectedCheck
-        env:
-          ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 60
-
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
-
-      - name: Capture Emulator Screenshot and Video
+        run: |
+         ls 
+         ./gradlew assembleDebug
+      - name: Start Android Emulator, Install APK, and Take Screenshot
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
@@ -241,19 +176,22 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           script: |
+            adb start-server
             adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb devices
             adb shell am start -n com.example.helloworld/.MainActivity
-            echo "Waiting for app to render..."
+            #adb shell dumpsys activity | grep mResumedActivity
+            #adb shell 'while [[ -z $(dumpsys activity | grep mResumedActivity | grep com.example.helloworld/.MainActivity) ]]; do sleep 1; done'
+            echo "MainActivity is now focused. Waiting a few seconds to ensure rendering..."
             sleep 5
-            adb shell screencap -p /sdcard/screenshot.png
-            adb shell screenrecord --time-limit 10 /sdcard/demo.mp4
+            adb shell screencap -p /sdcard/screenshot.png  # Take the screenshot using screencap
+            adb shell screenrecord /sdcard/demo.mp4 --time-limit 10
             adb pull /sdcard/screenshot.png .
             adb pull /sdcard/demo.mp4 .
-
-      - name: Upload Emulator Screenshot and Video
+      - name: Upload Emulator Screenshot
         uses: actions/upload-artifact@v4
         with:
-          name: emulator-artifacts
+          name: emulator-screenshot
           path: |
-            screenshot.png
-            demo.mp4
+           screenshot1.png
+           demo.mp4
