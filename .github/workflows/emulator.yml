@@ -52,6 +52,7 @@ jobs:
               id 'com.android.application'
           }
           android {
+              namespace 'com.example.helloworld'
               compileSdk 33
               defaultConfig {
                   applicationId "com.example.helloworld"
@@ -138,7 +139,9 @@ jobs:
       #     chmod +x gradlew
 
       - name: Build Debug APK
-        run: gradle assembleDebug
+        run: |
+         ls 
+         gradle assembleDebug
 
       - name: Start Android Emulator, Install APK, and Take Screenshot
         uses: reactivecircus/android-emulator-runner@v2
