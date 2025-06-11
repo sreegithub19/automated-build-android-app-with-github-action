@@ -26,6 +26,7 @@ jobs:
           mkdir -p app/src/main/java/com/example/helloworld
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/mipmap
           echo "android.useAndroidX=true" > gradle.properties
           cat > settings.gradle <<EOF
           rootProject.name = "HelloWorld"
@@ -131,6 +132,26 @@ jobs:
           <resources>
               <style name="Theme.AppCompat.Light.DarkActionBar" parent="Theme.AppCompat.Light.DarkActionBar" />
           </resources>
+          EOF
+          cat > app/src/main/res/mipmap/ic_launcher.xml <<EOF
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="48dp"
+              android:height="48dp"
+              android:viewportWidth="48"
+              android:viewportHeight="48">
+              <path android:fillColor="#3DDC84" android:pathData="M0,0h48v48h-48z"/>
+              <path android:fillColor="#FFF" android:pathData="M24,8a16,16 0 1,0 0,32a16,16 0 1,0 0,-32z"/>
+          </vector>
+          EOF
+          cat > app/src/main/res/mipmap/ic_launcher_round.xml <<EOF
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="48dp"
+              android:height="48dp"
+              android:viewportWidth="48"
+              android:viewportHeight="48">
+              <path android:fillColor="#3DDC84" android:pathData="M24,4a20,20 0 1,0 0,40a20,20 0 1,0 0,-40z"/>
+              <path android:fillColor="#FFF" android:pathData="M24,12a12,12 0 1,0 0,24a12,12 0 1,0 0,-24z"/>
+          </vector>
           EOF
           cat > app/proguard-rules.pro <<EOF
           # No rules
