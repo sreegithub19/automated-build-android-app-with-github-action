@@ -89,6 +89,7 @@ jobs:
               androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
               androidTestImplementation 'androidx.test:runner:1.5.2'
               androidTestImplementation 'androidx.test:rules:1.5.0'
+              androidTestImplementation 'androidx.test:core:1.5.0'
           }
           EOF
           # --- Create AndroidManifest.xml ---
@@ -199,6 +200,11 @@ jobs:
             import static androidx.test.espresso.matcher.ViewMatchers.withId;
             import static androidx.test.espresso.matcher.ViewMatchers.withText;
             import static androidx.test.espresso.assertion.ViewAssertions.matches;
+
+            // --- Screenshot imports --- //
+            import androidx.test.core.app.takeScreenshot;
+            import androidx.test.core.graphics.writeToTestStorage;
+
             @RunWith(AndroidJUnit4.class)
             public class ExampleInstrumentedTest {
                 @Rule
@@ -218,6 +224,13 @@ jobs:
                 public void certainTextDoesNotExist() {
                     String nonExistentText = "Another Text";
                     Espresso.onView(withText(nonExistentText)).check(ViewAssertions.doesNotExist());
+                }
+
+                    // ----------- Screenshot Test ----------- //
+                @Test
+                public void saveDeviceScreenBitmap() {
+                    // Take a screenshot of the whole screen and save to test storage with a unique name.
+                    takeScreenshot().writeToTestStorage("ExampleInstrumentedTest_saveDeviceScreenBitmap");
                 }
             }
           EOF
