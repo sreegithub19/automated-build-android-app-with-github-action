@@ -1,17 +1,15 @@
-name: Android Emulator Screenshot
+name: Android Emulator Screenshot with Connected Test
 
 on:
   push:
     branches: [ master ]
-  workflow_dispatch:
 
 jobs:
   emulator-screenshot:
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Checkout repository # <--- ADD THIS STEP!
+      - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Enable KVM
@@ -19,6 +17,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -28,6 +27,7 @@ jobs:
       - name: Create minimal Android app source
         run: |
           mkdir -p app/src/main/java/com/example/helloworld
+          mkdir -p app/src/androidTest/java/com/example/helloworld
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/mipmap
@@ -66,6 +66,7 @@ jobs:
                   targetSdk 33
                   versionCode 1
                   versionName "1.0"
+                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
               }
               buildTypes {
                   release {
@@ -77,6 +78,8 @@ jobs:
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.9.0'
+              androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+              androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
           }
           EOF
           cat > app/src/main/AndroidManifest.xml <<EOF
@@ -160,15 +163,54 @@ jobs:
           cat > app/proguard-rules.pro <<EOF
           # No rules
           EOF
+
+          # Minimal UI Test
+          cat > app/src/androidTest/java/com/example/helloworld/MainActivityTest.java <<EOF
+          package com.example.helloworld;
+
+          import androidx.test.ext.junit.runners.AndroidJUnit4;
+          import androidx.test.rule.ActivityTestRule;
+
+          import org.junit.Rule;
+          import org.junit.Test;
+          import org.junit.runner.RunWith;
+
+          import static androidx.test.espresso.Espresso.onView;
+          import static androidx.test.espresso.assertion.ViewAssertions.matches;
+          import static androidx.test.espresso.matcher.ViewMatchers.withId;
+          import static androidx.test.espresso.matcher.ViewMatchers.withText;
+
+          @RunWith(AndroidJUnit4.class)
+          public class MainActivityTest {
+
+              @Rule
+              public ActivityTestRule<MainActivity> activityRule = new ActivityTestRule<>(MainActivity.class);
+
+              @Test
+              public void textIsDisplayed() {
+                  onView(withId(R.id.hello)).check(matches(withText("Hello World from Actions!")));
+              }
+          }
+          EOF
+
       - name: Set Gradle wrapper
         run: |
           gradle wrapper
           chmod +x gradlew
+
+      - name: Run connectedCheck on Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          script: ./gradlew connectedCheck
+
       - name: Build Debug APK
-        run: |
-         ls 
-         ./gradlew assembleDebug
-      - name: Start Android Emulator, Install APK, and Take Screenshot
+        run: ./gradlew assembleDebug
+
+      - name: Start Emulator, Install APK, Launch App, and Capture Screenshot & Video
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
@@ -176,22 +218,19 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           script: |
-            adb start-server
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb devices
             adb shell am start -n com.example.helloworld/.MainActivity
-            #adb shell dumpsys activity | grep mResumedActivity
-            #adb shell 'while [[ -z $(dumpsys activity | grep mResumedActivity | grep com.example.helloworld/.MainActivity) ]]; do sleep 1; done'
-            echo "MainActivity is now focused. Waiting a few seconds to ensure rendering..."
+            echo "Waiting for app to render..."
             sleep 5
-            adb shell screencap -p /sdcard/screenshot.png  # Take the screenshot using screencap
-            adb shell screenrecord /sdcard/demo.mp4 --time-limit 10
+            adb shell screencap -p /sdcard/screenshot.png
+            adb shell screenrecord --time-limit 10 /sdcard/demo.mp4
             adb pull /sdcard/screenshot.png .
             adb pull /sdcard/demo.mp4 .
-      - name: Upload Emulator Screenshot
+
+      - name: Upload Emulator Screenshot and Video
         uses: actions/upload-artifact@v4
         with:
-          name: emulator-screenshot
+          name: emulator-artifacts
           path: |
-           screenshot1.png
-           demo.mp4
+            screenshot.png
+            demo.mp4
