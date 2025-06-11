@@ -84,8 +84,8 @@ jobs:
               }
               testOptions {
                   animationsDisabled = true
-                  resultsDir = "${project.projectDir}/test-results"
-                  reportDir = "${project.projectDir}/test-reports"
+                  resultsDir = file("${project.projectDir}/test-results")
+                  reportDir = file("${project.projectDir}/test-reports")
               }
           }
           dependencies {
