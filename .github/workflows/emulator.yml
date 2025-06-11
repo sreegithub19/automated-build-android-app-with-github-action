@@ -288,6 +288,7 @@ jobs:
             adb wait-for-device
             adb devices
             sleep 5
+            adb pull /sdcard/Pictures/test_screenshots ./device_screenshots || true
             ./gradlew connectedCheck &
             TEST_PID=$!
             # Take screenshots at intervals
@@ -297,11 +298,6 @@ jobs:
             sleep 5
             #done
             wait $TEST_PID
-
-      - name: Pull test screenshots from emulator
-        if: always()
-        run: |
-          adb pull /sdcard/Pictures/test_screenshots ./device_screenshots || true
 
       - name: Upload Emulator Test Screenshots
         if: always()
