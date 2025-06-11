@@ -1,4 +1,4 @@
-name: Android Emulator Screenshot
+name: Android Emulator Screenshot & Connected Check
 
 on:
   push:
@@ -10,27 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Checkout repository # <--- ADD THIS STEP!
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2 # Using v2 for broader compatibility if needed, but v4 is generally preferred
 
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Create minimal Android app source
+      - name: Create minimal Android app source and test files # <-- MODIFIED STEP
         run: |
+          # --- Main App Source ---
           mkdir -p app/src/main/java/com/example/helloworld
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/mipmap
+
           echo "android.useAndroidX=true" > gradle.properties
           cat > settings.gradle <<EOF
           rootProject.name = "HelloWorld"
@@ -66,6 +68,7 @@ jobs:
                   targetSdk 33
                   versionCode 1
                   versionName "1.0"
+                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner" # <-- IMPORTANT: Add this for tests
               }
               buildTypes {
                   release {
@@ -77,6 +80,13 @@ jobs:
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.9.0'
+
+              # --- Test Dependencies (NEW) ---
+              testImplementation 'junit:junit:4.13.2'
+              androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+              androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+              androidTestImplementation 'androidx.test:runner:1.5.2' # Explicitly add runner and rules
+              androidTestImplementation 'androidx.test:rules:1.5.0'
           }
           EOF
           cat > app/src/main/AndroidManifest.xml <<EOF
@@ -104,11 +114,16 @@ jobs:
           package com.example.helloworld;
           import android.os.Bundle;
           import androidx.appcompat.app.AppCompatActivity;
+          import android.widget.TextView; // Import TextView
+          import R.layout; // Import R.layout for activity_main
           public class MainActivity extends AppCompatActivity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   setContentView(R.layout.activity_main);
+                  // Optional: Set text programmatically if you want to test that specific flow
+                  // TextView helloTextView = findViewById(R.id.hello);
+                  // helloTextView.setText("Hello World from Actions!");
               }
           }
           EOF
@@ -160,15 +175,65 @@ jobs:
           cat > app/proguard-rules.pro <<EOF
           # No rules
           EOF
-      - name: Set Gradle wrapper
+
+          # --- Instrumentation Test Source (NEW) ---
+          mkdir -p app/src/androidTest/java/com/example/helloworld # <-- NEW: Create test directory
+          cat > app/src/androidTest/java/com/example/helloworld/ExampleInstrumentedTest.java <<EOF
+          package com.example.helloworld;
+
+          import android.content.Context;
+          import androidx.test.platform.app.InstrumentationRegistry;
+          import androidx.test.ext.junit.runners.AndroidJUnit4;
+          import androidx.test.espresso.Espresso;
+          import androidx.test.espresso.matcher.ViewMatchers;
+          import androidx.test.espresso.assertion.ViewAssertions;
+          import androidx.test.rule.ActivityTestRule;
+
+          import org.junit.Test;
+          import org.junit.runner.RunWith;
+          import org.junit.Rule;
+
+          import static org.junit.Assert.*;
+          import static androidx.test.espresso.matcher.ViewMatchers.withId;
+          import static androidx.test.espresso.matcher.ViewMatchers.withText;
+          import static androidx.test.espresso.assertion.ViewAssertions.matches;
+
+
+          /**
+           * Instrumented test, which will execute on an Android device.
+           *
+           * @see Testing documentation
+           */
+          @RunWith(AndroidJUnit4.class)
+          public class ExampleInstrumentedTest {
+
+              // Rule to launch MainActivity before each test
+              @Rule
+              public ActivityTestRule<MainActivity> activityRule =
+                      new ActivityTestRule<>(MainActivity.class);
+
+              @Test
+              public void useAppContext() {
+                  // Context of the app under test.
+                  Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+                  assertEquals("com.example.helloworld", appContext.getPackageName());
+              }
+
+              @Test
+              public void helloWorldTextViewIsDisplayed() {
+                  // Check if the TextView with ID R.id.hello displays the correct text
+                  Espresso.onView(withId(R.id.hello))
+                          .check(matches(withText("Hello World from Actions!")));
+              }
+          }
+          EOF
+
+      - name: Set Gradle wrapper # This step is important if gradlew isn't already committed
         run: |
           gradle wrapper
           chmod +x gradlew
-      - name: Build Debug APK
-        run: |
-         ls 
-         ./gradlew assembleDebug
-      - name: Start Android Emulator, Install APK, and Take Screenshot
+
+      - name: Run Connected Tests (gradlew connectedCheck) # <-- MODIFIED STEP
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
@@ -176,22 +241,31 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           script: |
-            adb start-server
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb devices
-            adb shell am start -n com.example.helloworld/.MainActivity
-            #adb shell dumpsys activity | grep mResumedActivity
-            #adb shell 'while [[ -z $(dumpsys activity | grep mResumedActivity | grep com.example.helloworld/.MainActivity) ]]; do sleep 1; done'
-            echo "MainActivity is now focused. Waiting a few seconds to ensure rendering..."
-            sleep 5
-            adb shell screencap -p /sdcard/screenshot.png  # Take the screenshot using screencap
-            adb shell screenrecord /sdcard/demo.mp4 --time-limit 10
-            adb pull /sdcard/screenshot.png .
-            adb pull /sdcard/demo.mp4 .
-      - name: Upload Emulator Screenshot
+            echo "--- Running gradlew connectedCheck ---"
+            # This task will build the app, build the test app, install both, run tests, and report results.
+            ./gradlew connectedCheck
+            echo "--- gradlew connectedCheck finished ---"
+
+            # Optional: You can still take a screenshot after tests, but the primary goal for connectedCheck is test results.
+            # adb shell screencap -p /sdcard/screenshot.png
+            # adb pull /sdcard/screenshot.png .
+            # adb shell screenrecord /sdcard/demo.mp4 --time-limit 10
+            # adb pull /sdcard/demo.mp4 .
+
+      - name: Upload Test Results (if any) # Optional, but good practice
+        if: always() # Ensure this runs even if tests fail
         uses: actions/upload-artifact@v4
         with:
-          name: emulator-screenshot
-          path: |
-           screenshot1.png
-           demo.mp4
+          name: test-results
+          path: app/build/reports/androidTests/connected/ # Default path for test reports
+          # You can also upload test logs if needed
+          # path: app/build/outputs/androidTest-results/connected/
+
+      - name: Upload Emulator Screenshot and Video (if desired, from previous steps)
+        # Uncomment and configure if you still want a screenshot/video after tests
+        # uses: actions/upload-artifact@v4
+        # with:
+        #   name: emulator-visuals
+        #   path: |
+        #     screenshot.png # Make sure you take this screenshot in the above step
+        #     demo.mp4     # Make sure you record this video in the above step
