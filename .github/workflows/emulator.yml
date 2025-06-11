@@ -265,7 +265,7 @@ jobs:
             sleep 5
 
             # Take screenshots at intervals
-            for i in {1..5}
+            for i in $(seq 1 5)
             do
                 adb exec-out screencap -p > screenshot_$i.png
                 echo "Captured screenshot $i"
