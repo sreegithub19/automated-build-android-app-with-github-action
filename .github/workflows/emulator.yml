@@ -258,15 +258,14 @@ jobs:
           arch: x86_64 # Architecture
           profile: Nexus 6 # Device profile
           script: |
-            ./gradlew connectedCheck &
-            TEST_PID=$!
-
-            # Give the emulator some time to launch and start the test
-            sleep 5
 
             # Wait for emulator to be fully ready
             adb wait-for-device
             adb devices
+            sleep 5
+
+            ./gradlew connectedCheck &
+            TEST_PID=$!
 
             # Take screenshots at intervals
             #for i in $(seq 1 5); do
