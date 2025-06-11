@@ -3,7 +3,7 @@ name: Android Emulator Screenshot & Connected Check
 on:
   push:
     branches: [ master ]
-  workflow_dispatch:
+  #workflow_dispatch:
 
 jobs:
   emulator-screenshot:
@@ -261,11 +261,11 @@ jobs:
           # You can also upload test logs if needed
           # path: app/build/outputs/androidTest-results/connected/
 
-      - name: Upload Emulator Screenshot and Video (if desired, from previous steps)
-        # Uncomment and configure if you still want a screenshot/video after tests
-        # uses: actions/upload-artifact@v4
-        # with:
-        #   name: emulator-visuals
-        #   path: |
-        #     screenshot.png # Make sure you take this screenshot in the above step
-        #     demo.mp4     # Make sure you record this video in the above step
+      # - name: Upload Emulator Screenshot and Video (if desired, from previous steps)
+      #   # Uncomment and configure if you still want a screenshot/video after tests
+      #   # uses: actions/upload-artifact@v4
+      #   # with:
+      #   #   name: emulator-visuals
+      #   #   path: |
+      #   #     screenshot.png # Make sure you take this screenshot in the above step
+      #   #     demo.mp4     # Make sure you record this video in the above step
