@@ -1,27 +1,29 @@
+
 name: Android Emulator Screenshot & Connected Check
 
 on:
   push:
     branches: [ master ]
+  #workflow_dispatch: # Allows manual triggering from the GitHub UI
 
 jobs:
   emulator-screenshot:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Specifies the runner environment
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Always check out your code first
 
       - name: Enable KVM on runner
         run: |
+          # These commands are necessary to enable KVM for faster emulator performance on Ubuntu runners.
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: temurin # Using Temurin distribution for JDK
           java-version: 17
 
       - name: Create minimal Android app source and test files
@@ -32,7 +34,6 @@ jobs:
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/mipmap
           mkdir -p app/src/androidTest/java/com/example/helloworld # Directory for instrumentation tests
-
           # --- Create Gradle configuration files ---
           echo "android.useAndroidX=true" > gradle.properties
           cat > settings.gradle <<EOF
@@ -56,7 +57,6 @@ jobs:
               }
           }
           EOF
-
           # --- Create app-level build.gradle with dependencies and test runner ---
           cat > app/build.gradle <<EOF
           plugins {
@@ -79,19 +79,10 @@ jobs:
                       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
               }
-              buildFeatures {
-                  buildConfig = true
-              }
-              testOptions {
-                  animationsDisabled = true
-                  resultsDir = file("${project.projectDir}/test-results")
-                  reportDir = file("${project.projectDir}/test-reports")
-              }
           }
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.9.0'
-
               testImplementation 'junit:junit:4.13.2'
               androidTestImplementation 'androidx.test.ext:junit:1.1.5'
               androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
@@ -100,12 +91,10 @@ jobs:
               androidTestImplementation 'androidx.test:rules:1.5.0'
           }
           EOF
-
           # --- Create AndroidManifest.xml ---
           cat > app/src/main/AndroidManifest.xml <<EOF
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
                 package="com.example.helloworld">
-                <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
                 <application
                     android:allowBackup="true"
                     android:icon="@mipmap/ic_launcher"
@@ -113,23 +102,22 @@ jobs:
                     android:roundIcon="@mipmap/ic_launcher_round"
                     android:supportsRtl="true"
                     android:theme="@style/AppTheme"> <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
+                        android:name=".MainActivity"
+                        android:exported="true">
+                        <intent-filter>
+                            <action android:name="android.intent.action.MAIN" />
+                            <category android:name="android.intent.category.LAUNCHER" />
+                        </intent-filter>
+                    </activity>
+                </application>
+            </manifest>
           EOF
-
           # --- Create MainActivity.java (corrected: removed 'import R.layout;') ---
           cat > app/src/main/java/com/example/helloworld/MainActivity.java <<EOF
           package com.example.helloworld;
           import android.os.Bundle;
           import androidx.appcompat.app.AppCompatActivity;
-
+          // No need to import R.layout; Java knows about R within the same package.
           public class MainActivity extends AppCompatActivity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -138,7 +126,6 @@ jobs:
               }
           }
           EOF
-
           # --- Create activity_main.xml layout ---
           cat > app/src/main/res/layout/activity_main.xml <<EOF
           <?xml version="1.0" encoding="utf-8"?>
@@ -155,21 +142,18 @@ jobs:
                   android:textSize="24sp"/>
           </LinearLayout>
           EOF
-
           # --- Create strings.xml ---
           cat > app/src/main/res/values/strings.xml <<EOF
           <resources>
               <string name="app_name">HelloWorld</string>
           </resources>
           EOF
-
           # --- Create styles.xml (corrected: proper AppTheme definition) ---
           cat > app/src/main/res/values/styles.xml <<EOF
           <resources>
               <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar" />
           </resources>
           EOF
-
           # --- Create mipmap icons ---
           cat > app/src/main/res/mipmap/ic_launcher.xml <<EOF
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -194,15 +178,12 @@ jobs:
           cat > app/proguard-rules.pro <<EOF
           # No rules
           EOF
-
           # --- Create ExampleInstrumentedTest.java for connectedCheck ---
           cat > app/src/androidTest/java/com/example/helloworld/ExampleInstrumentedTest.java <<EOF
             package com.example.helloworld;
-
             import android.content.Context;
             import android.graphics.Bitmap;
             import android.os.Environment;
-
             import androidx.test.platform.app.InstrumentationRegistry;
             import androidx.test.ext.junit.runners.AndroidJUnit4;
             import androidx.test.espresso.Espresso;
@@ -210,107 +191,88 @@ jobs:
             import androidx.test.espresso.assertion.ViewAssertions;
             import androidx.test.rule.ActivityTestRule;
             import androidx.test.uiautomator.UiDevice;
-
             import org.junit.Rule;
             import org.junit.Test;
             import org.junit.runner.RunWith;
-
             import java.io.File;
-            import java.io.FileOutputStream;
-            import java.io.IOException;
-
             import static org.junit.Assert.assertEquals;
             import static androidx.test.espresso.matcher.ViewMatchers.withId;
             import static androidx.test.espresso.matcher.ViewMatchers.withText;
             import static androidx.test.espresso.assertion.ViewAssertions.matches;
-
-            import androidx.test.InstrumentationRegistry;  // Correct import for Instrumentation
-
             @RunWith(AndroidJUnit4.class)
             public class ExampleInstrumentedTest {
-
                 @Rule
                 public ActivityTestRule<MainActivity> activityRule =
                         new ActivityTestRule<>(MainActivity.class);
-
                 @Test
                 public void useAppContext() {
                     Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
                     assertEquals("com.example.helloworld", appContext.getPackageName());
                 }
-
                 @Test
                 public void helloWorldTextViewIsDisplayed() {
                     Espresso.onView(withId(R.id.hello))
                             .check(matches(withText("Hello World from Actions!")));
-                    takeScreenshot("helloWorldDisplayed"); // Take screenshot after checking the text
                 }
-
                 @Test
                 public void certainTextDoesNotExist() {
                     String nonExistentText = "Another Text";
                     Espresso.onView(withText(nonExistentText)).check(ViewAssertions.doesNotExist());
-                    takeScreenshot("textDoesNotExist"); // Take screenshot after checking absence of text
                 }
-
-
-                /**
-                 * Takes a screenshot of the current device display and saves it to a file.
-                 *
-                 * @param filename The name of the file to save the screenshot as (without extension).
-                 */
-                private void takeScreenshot(String filename) {
-                    UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-                    File screenshotDir = new File(InstrumentationRegistry.getInstrumentation().getTargetContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "screenshots");  // Use getTargetContext()
-                    if (!screenshotDir.exists()) {
-                        screenshotDir.mkdirs();
-                    }
-                    File screenshotFile = new File(screenshotDir, filename + ".png");
-
-                    try {
-                        Bitmap screenshot = device.takeScreenshot();
-                        FileOutputStream outputStream = new FileOutputStream(screenshotFile);
-                        screenshot.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-                        outputStream.close();
-                        System.out.println("Screenshot saved to: " + screenshotFile.getAbsolutePath());  // Log the path
-                    } catch (IOException e) {
-                        System.err.println("Failed to take screenshot: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-
             }
           EOF
-
       - name: Set Gradle wrapper executable
+        # Ensure the gradlew script is executable. Necessary for running Gradle commands.
         run: |
-          gradle wrapper
+          gradle wrapper # Generates gradlew (if not already present from checkout)
           chmod +x gradlew
-
       - name: Run Connected Tests (gradlew connectedCheck)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
-          target: google_apis
-          arch: x86_64
-          profile: Nexus 6
+          api-level: 29 # The Android API level for the emulator
+          target: google_apis # Emulator image with Google APIs
+          arch: x86_64 # Architecture
+          profile: Nexus 6 # Device profile
           script: |
             # Wait for emulator to be fully ready
             adb wait-for-device
             adb devices
             sleep 5
             ./gradlew connectedCheck
-
       - name: Upload Test Results
+        # Uploads the detailed test reports generated by connectedCheck.
+        # This step runs even if the tests fail (if: always()).
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-test-results
-          path: app/build/reports/androidTests/connected/
+          path: app/build/reports/androidTests/connected/ # Default path for HTML and XML reports
 
-      - name: Upload Screenshots
-        if: always()
+
+      - name: Run Connected Tests (gradlew connectedCheck)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29 # The Android API level for the emulator
+          target: google_apis # Emulator image with Google APIs
+          arch: x86_64 # Architecture
+          profile: Nexus 6 # Device profile
+          script: |
+            # Wait for emulator to be fully ready
+            adb wait-for-device
+            adb devices
+            sleep 5
+            ./gradlew connectedCheck &
+            TEST_PID=$!
+            # Take screenshots at intervals
+            #for i in $(seq 1 5); do
+            adb exec-out screencap -p > screenshot.png
+            echo "Captured screenshot"
+            sleep 5
+            #done
+            wait $TEST_PID
+      - name: Upload Screenshot
+        if: always()  # Ensure this step runs even if tests fail
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots
-          path: app/build/outputs/androidTest/connected/screenshots/debug/
+            name: emulator-screenshot
+            path: screenshot.png
