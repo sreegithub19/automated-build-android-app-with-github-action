@@ -27,7 +27,6 @@ jobs:
 
       - name: Create minimal Android app source and test files # <-- MODIFIED STEP
         run: |
-          # --- Main App Source ---
           mkdir -p app/src/main/java/com/example/helloworld
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
@@ -68,7 +67,7 @@ jobs:
                   targetSdk 33
                   versionCode 1
                   versionName "1.0"
-                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner" # <-- IMPORTANT: Add this for tests
+                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
               }
               buildTypes {
                   release {
@@ -81,11 +80,10 @@ jobs:
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.9.0'
 
-              # --- Test Dependencies (NEW) ---
               testImplementation 'junit:junit:4.13.2'
               androidTestImplementation 'androidx.test.ext:junit:1.1.5'
               androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-              androidTestImplementation 'androidx.test:runner:1.5.2' # Explicitly add runner and rules
+              androidTestImplementation 'androidx.test:runner:1.5.2'
               androidTestImplementation 'androidx.test:rules:1.5.0'
           }
           EOF
@@ -177,7 +175,7 @@ jobs:
           EOF
 
           # --- Instrumentation Test Source (NEW) ---
-          mkdir -p app/src/androidTest/java/com/example/helloworld # <-- NEW: Create test directory
+          mkdir -p app/src/androidTest/java/com/example/helloworld
           cat > app/src/androidTest/java/com/example/helloworld/ExampleInstrumentedTest.java <<EOF
           package com.example.helloworld;
 
