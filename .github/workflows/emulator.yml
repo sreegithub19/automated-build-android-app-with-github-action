@@ -26,6 +26,7 @@ jobs:
           mkdir -p app/src/main/java/com/example/helloworld
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
+          echo "android.useAndroidX=true" > gradle.properties
           cat > settings.gradle <<EOF
           rootProject.name = "HelloWorld"
           include ':app'
