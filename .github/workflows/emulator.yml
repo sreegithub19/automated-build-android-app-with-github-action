@@ -90,6 +90,7 @@ jobs:
               androidTestImplementation 'androidx.test:runner:1.5.2'
               androidTestImplementation 'androidx.test:rules:1.5.0'
               androidTestImplementation 'androidx.test:core:1.5.0'
+              androidTestImplementation 'junit:junit:4.13.2'
           }
           EOF
           # --- Create AndroidManifest.xml ---
@@ -208,6 +209,7 @@ jobs:
             //import androidx.test.core.app.takeScreenshot;
             //import androidx.test.core.graphics.writeToTestStorage;
             import androidx.test.uiautomator.UiDevice;
+            import static org.junit.Assert.assertTrue;
 
             @RunWith(AndroidJUnit4.class)
             public class ExampleInstrumentedTest {
