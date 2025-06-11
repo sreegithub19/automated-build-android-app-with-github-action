@@ -242,6 +242,7 @@ jobs:
                         dir.mkdirs();
                     }
                     File screenshotFile = new File(dir, "ExampleInstrumentedTest_saveDeviceScreenBitmap.png");
+                    System.out.println("dir:" + dir);
                     boolean success = device.takeScreenshot(screenshotFile);
                     //assertTrue("Screenshot should be taken successfully", success);
                 }
