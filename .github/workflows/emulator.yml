@@ -235,6 +235,12 @@ jobs:
                   Espresso.onView(withId(R.id.hello))
                           .check(matches(withText("Hello World from Actions!")));
               }
+
+              @Test
+              public void certainTextDoesNotExist() {
+                  String nonExistentText = "Another Text";
+                  Espresso.onView(withText(nonExistentText)).check(ViewAssertions.doesNotExist());
+              }
           }
           EOF
 
