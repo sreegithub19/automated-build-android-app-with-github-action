@@ -100,18 +100,6 @@ jobs:
                 </application>
             </manifest>
           EOF
-          cat > app/src/main/java/com/example/helloworld/MainActivity.java <<EOF
-          package com.example.helloworld;
-          import android.os.Bundle;
-          import androidx.appcompat.app.AppCompatActivity;
-          public class MainActivity extends AppCompatActivity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  setContentView(R.layout.activity_main);
-              }
-          }
-          EOF
           cat > app/src/main/res/layout/activity_main.xml <<EOF
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -126,6 +114,18 @@ jobs:
                   android:text="Hello World from Actions!"
                   android:textSize="24sp"/>
           </LinearLayout>
+          EOF
+          cat > app/src/main/java/com/example/helloworld/MainActivity.java <<EOF
+          package com.example.helloworld;
+          import android.os.Bundle;
+          import androidx.appcompat.app.AppCompatActivity;
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_main);
+              }
+          }
           EOF
           cat > app/src/main/res/values/strings.xml <<EOF
           <resources>
@@ -181,6 +181,7 @@ jobs:
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -n com.example.helloworld/.MainActivity
+            adb shell 'while [[ -z $(dumpsys window windows | grep -E "mCurrentFocus.*MainActivity") ]]; do sleep 5; done'
             sleep 30
             adb exec-out screencap -p > screenshot.png
       - name: Upload Emulator Screenshot
