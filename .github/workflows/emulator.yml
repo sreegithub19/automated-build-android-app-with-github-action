@@ -179,7 +179,9 @@ jobs:
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -n com.example.helloworld/.MainActivity
             sleep 30
-            adb exec-out screencap -p > screenshot.png
+            adb shell screencap -p /sdcard/screenshot.png
+            adb pull /sdcard/screenshot.png
+
       - name: Upload Emulator Screenshot
         uses: actions/upload-artifact@v4
         with:
