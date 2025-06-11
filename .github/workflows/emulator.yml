@@ -113,7 +113,6 @@ jobs:
           import android.os.Bundle;
           import androidx.appcompat.app.AppCompatActivity;
           import android.widget.TextView; // Import TextView
-          import R.layout; // Import R.layout for activity_main
           public class MainActivity extends AppCompatActivity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
