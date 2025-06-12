@@ -1,7 +1,8 @@
 name: Android Emulator via Docker (budtmo/docker-android) + Ngrok
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ master ]
 
 jobs:
   android-emulator:
