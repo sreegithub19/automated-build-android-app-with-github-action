@@ -41,7 +41,11 @@ jobs:
 
       - name: Show ngrok public URL
         run: |
-          NGROK_URL=$(curl -s localhost:4040/api/tunnels | grep -o 'https://[0-9a-z]*\.ngrok-free\.app')
+          NGROK_URL=$(curl -s localhost:4040/api/tunnels | grep -o 'https://[0-9a-z]*\.ngrok-free\.app' || echo "Failed to fetch ngrok URL")
+          if [ "$NGROK_URL" = "Failed to fetch ngrok URL" ]; then
+            echo "Error: Could not retrieve ngrok public URL."
+            exit 1
+          fi
           echo "VNC Web UI available at: $NGROK_URL"
           echo "::notice title=Ngrok VNC URL::$NGROK_URL"
 
