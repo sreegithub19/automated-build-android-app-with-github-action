@@ -1,0 +1,9 @@
+{
+  "name": "appium-test",
+  "version": "1.0.0",
+  "description": "Appium screenshot test",
+  "main": "your_script_name.js",
+  "dependencies": {
+    "wd": "^1.13.0"
+  }
+}
