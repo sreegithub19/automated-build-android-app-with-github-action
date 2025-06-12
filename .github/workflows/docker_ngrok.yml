@@ -1,4 +1,4 @@
-name: Android Emulator via Docker (budtmo/docker-android) + Ngrok
+name: Android Emulator via Docker (budtmo/docker-android) + Cloudflare Tunnel
 
 on:
   push:
@@ -25,25 +25,27 @@ jobs:
             --name android-container \
             budtmo/docker-android
 
-      - name: Download and configure ngrok
-        # env:
-        #   NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+      - name: Install cloudflared
         run: |
-          # Install ngrok
-          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list >/dev/null
-          sudo apt update && sudo apt install ngrok
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
 
-          # Authenticate ngrok using the authtoken from GitHub Secrets
-          ngrok authtoken 2whue6P5qFygcTJjinX37XDBpTN_YUPyCQTL9pWdzG5KQsTb
-
-          # Start ngrok to expose localhost:8090
-          ngrok tcp 6080 --log=stdout > ngrok_tunnel.log &
-
-          # Wait for ngrok to initialize and fetch public URL
+      - name: Start Cloudflare Tunnel
+        run: |
+          # Start cloudflared to expose localhost:6080
+          cloudflared tunnel --url http://localhost:6080 --logfile cloudflared.log --loglevel info > cloudflared_output.log 2>&1 &
           sleep 5
-          NGROK_PUBLIC_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-          echo "ngrok public URL: $NGROK_PUBLIC_URL"
+
+          # Extract the public URL from the log file
+          TUNNEL_URL=$(grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare\.com' cloudflared_output.log | head -n 1)
+          
+          if [ -z "$TUNNEL_URL" ]; then
+            echo "Failed to retrieve Cloudflare tunnel URL"
+            exit 1
+          fi
+
+          echo "Cloudflare public URL: $TUNNEL_URL"
+          echo "::set-output name=cloudflare_url::$TUNNEL_URL"
 
       - name: Wait for emulator to boot
         run: |
@@ -54,7 +56,7 @@ jobs:
         run: |
           docker exec android-container adb shell getprop ro.build.version.release
 
-      - name: Keep VNC/Ngrok tunnel alive for manual access
+      - name: Keep Cloudflare tunnel alive for manual access
         run: sleep 600
 
       - name: Stop and remove container
