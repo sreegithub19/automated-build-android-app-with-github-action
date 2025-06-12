@@ -24,10 +24,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'  # GitHub runners typically have Node.js 20.x available
+
       - name: Install Appium and Node.js
         run: |
-          sudo apt-get update
-          sudo apt-get install -y nodejs npm
           npm install -g appium
           appium -v
 
