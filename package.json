@@ -1,5 +1,0 @@
-{
-  "scripts": {
-    "test": "mocha test.js --reporter mochawesome --reporter-options reportDir=mochawesome-report"
-  }
-}
