@@ -277,7 +277,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-test-results
-          path: app/build/reports/androidTests/connected/ # Default path for HTML and XML reports
+          path: app/build/reports/ # Default path for HTML and XML reports
 
 
       - name: Run Connected Tests (gradlew connectedCheck)
