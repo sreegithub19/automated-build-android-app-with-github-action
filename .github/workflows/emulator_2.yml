@@ -236,7 +236,7 @@ jobs:
                 platformName: 'Android',
                 platformVersion: '11.0', // Or your desired Android version
                 deviceName: 'emulator-5554', // This should match the emulator name
-                app: '${{GITHUB_WORKSPACE}}/app/build/outputs/apk/debug/app-debug.apk',
+                app: '${GITHUB_WORKSPACE}/app/build/outputs/apk/debug/app-debug.apk',
                 automationName: 'UiAutomator2',
                 appWaitActivity: 'com.example.helloworld.MainActivity'
               };
