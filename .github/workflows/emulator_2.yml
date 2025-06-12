@@ -236,8 +236,9 @@ jobs:
                 platformName: 'Android',
                 platformVersion: '11.0', // Or your desired Android version
                 deviceName: 'emulator-5554', // This should match the emulator name
-                app: '\${{ github.workspace }}/app/build/outputs/apk/debug/app-debug.apk',
-                automationName: 'UiAutomator2'
+                app: '${{GITHUB_WORKSPACE}}/app/build/outputs/apk/debug/app-debug.apk',
+                automationName: 'UiAutomator2',
+                appWaitActivity: 'com.example.helloworld.MainActivity'
               };
 
               const appiumOptions = {
@@ -292,7 +293,7 @@ jobs:
             appium &
 
             # Wait for Appium to start (adjust the sleep time as needed)
-            sleep 10
+            sleep 60
 
             # Run tests and generate the Mochawesome report
             npm test
