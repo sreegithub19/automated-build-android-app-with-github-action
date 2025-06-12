@@ -205,7 +205,7 @@ jobs:
             ./gradlew connectedCheck || true
 
             echo "Starting Appium Screenshot Test with Node.js"
-            node <<'EOF'
+            node <<EOF
             const wd = require('wd');
             const fs = require('fs');
             const path = require('path');
