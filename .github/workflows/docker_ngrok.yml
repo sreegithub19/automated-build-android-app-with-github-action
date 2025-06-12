@@ -38,7 +38,7 @@ jobs:
           ngrok authtoken 2whue6P5qFygcTJjinX37XDBpTN_YUPyCQTL9pWdzG5KQsTb
 
           # Start ngrok to expose localhost:8090
-          ngrok http 8090 > /dev/null &
+          ngrok http 6080 --log=stdout > ngrok_tunnel.log &
 
           # Wait for ngrok to initialize and fetch public URL
           sleep 5
