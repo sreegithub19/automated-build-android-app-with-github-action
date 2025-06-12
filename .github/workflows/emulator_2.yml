@@ -34,6 +34,7 @@ jobs:
           npm install -g appium
           npm install webdriverio
           npm install mocha mochawesome --save-dev
+          appium driver install uiautomator2
 
       - name: Create minimal Android app source and test files
         run: |
@@ -219,31 +220,6 @@ jobs:
             }
           EOF
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v2
-
-      - name: Start Android Emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        id: emulator-runner
-        with:
-          api-level: 29
-          target: google_apis
-          arch: x86_64
-          profile: Nexus 6
-          emulator-options: -no-window -no-audio #Run headless
-          disable-animations: true
-          script: |
-            # Wait for emulator to be fully ready
-            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
-
-            # Start Appium in the background (replace with your Appium start command if needed)
-            appium &
-
-            # Wait for Appium to start (adjust the sleep time as needed)
-            sleep 10
-
-            # Run tests and generate the Mochawesome report
-            npm test
       - name: Create Appium Test File
         run: |
           # Create a basic Appium test file (test.js)
@@ -294,6 +270,34 @@ jobs:
           });
           EOF
 
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Start Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        id: emulator-runner
+        with:
+          api-level: 29
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          emulator-options: -no-window -no-audio
+          disable-animations: true
+          script: |
+            # Wait for emulator to be fully ready
+            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+
+            # Start Appium in the background (replace with your Appium start command if needed)
+            appium &
+
+            # Wait for Appium to start (adjust the sleep time as needed)
+            sleep 10
+
+            # Run tests and generate the Mochawesome report
+            npm test
+
+
       - name: Build Android App
         run: ./gradlew assembleDebug
 
@@ -302,8 +306,16 @@ jobs:
 
       - name: Run Appium Tests
         run: |
+          # Add the test script to package.json
+          cat > package.json <<EOF
+          {
+            "scripts": {
+              "test": "mocha test.js --reporter mochawesome --reporter-options reportDir=mochawesome-report"
+            }
+          }
+          EOF
           # Run the tests
-          npx mocha test.js
+          npm test
 
       - name: Upload Appium Screenshots
         if: always()
@@ -332,3 +344,5 @@ jobs:
         run: |
           # Terminate the emulator
           adb -s emulator-5554 emu kill || true
+          sleep 5 #Give the emulator some time to terminate
+
