@@ -219,16 +219,16 @@ jobs:
                 @Test
                 public void useAppContext() {
                     Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-                    assertEquals("com.example.helloword", appContext.getPackageName());
+                    assertEquals("com.example.helloworld", appContext.getPackageName());
                 }
                 @Test
                 public void helloWorldTextViewIsDisplayed() {
                     Espresso.onView(withId(R.id.hello))
-                            .check(matches(withText("Helo World from Actions!")));
+                            .check(matches(withText("Hello World from Actions!")));
                 }
                 @Test
                 public void certainTextDoesNotExist() {
-                    String nonExistentText = "Hello World from Actions!";
+                    String nonExistentText = "Hello from Actions!";
                     Espresso.onView(withText(nonExistentText)).check(ViewAssertions.doesNotExist());
                 }
 
