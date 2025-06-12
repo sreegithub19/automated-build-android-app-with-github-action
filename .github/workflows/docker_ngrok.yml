@@ -1,0 +1,63 @@
+name: Android Emulator via Docker (budtmo/docker-android) + Ngrok
+
+on:
+  workflow_dispatch:
+
+jobs:
+  android-emulator:
+    runs-on: linux
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull docker-android image
+        run: |
+          docker pull budtmo/docker-android-x86-11.0
+
+      - name: Start Android emulator container
+        run: |
+          docker run -d --privileged \
+            -e DEVICE="Samsung Galaxy S10" \
+            -e APPIUM=true \
+            -p 6080:6080 -p 5554:5554 -p 5555:5555 \
+            --name android-container \
+            budtmo/docker-android-x86-11.0
+
+      - name: Download and configure ngrok
+        # env:
+        #   NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+        run: |
+          wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+          unzip ngrok-stable-linux-amd64.zip
+          chmod +x ngrok
+          ./ngrok authtoken 2whue6P5qFygcTJjinX37XDBpTN_YUPyCQTL9pWdzG5KQsTb
+
+      - name: Start ngrok tunnel for VNC (port 6080)
+        run: |
+          ./ngrok http 6080 > ngrok.log &
+          sleep 5
+
+      - name: Show ngrok public URL
+        run: |
+          NGROK_URL=$(curl -s localhost:4040/api/tunnels | grep -o 'https://[0-9a-z]*\.ngrok-free\.app')
+          echo "VNC Web UI available at: $NGROK_URL"
+          echo "::notice title=Ngrok VNC URL::$NGROK_URL"
+
+      - name: Wait for emulator to boot
+        run: |
+          sleep 60
+          docker exec android-container adb devices
+
+      - name: Run an example ADB command
+        run: |
+          docker exec android-container adb shell getprop ro.build.version.release
+
+      - name: Keep VNC/Ngrok tunnel alive for manual access
+        run: sleep 600
+
+      - name: Stop and remove container
+        if: always()
+        run: |
+          docker stop android-container
+          docker rm android-container
