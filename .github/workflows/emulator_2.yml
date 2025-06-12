@@ -200,12 +200,12 @@ jobs:
           script: |
             adb wait-for-device
             adb devices
-            sleep 5
+            sleep 40
 
             ./gradlew connectedCheck || true
 
             echo "Starting Appium Screenshot Test with Node.js"
-            npm install
+            npm install wd
             node tests.js
 
       - name: Upload Emulator Test Screenshots
