@@ -27,16 +27,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'  # GitHub runners typically have Node.js 20.x available
+          node-version: '20'
 
-      - name: Install Appium and Node.js
+      - name: Run Appium Server in Docker
         run: |
-          npm install -g appium
-          appium -v
-
-      - name: Start Appium Server
-        run: |
-          nohup appium > appium.log 2>&1 &
+          docker run -d -p 4723:4723 appium/appium
           sleep 10
 
       - name: Create minimal Android app source and test files
